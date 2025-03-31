@@ -1,0 +1,8 @@
+<input type="color" id="p1Color" value="#ff0000"> Player 1 Color  
+<input type="color" id="p2Color" value="#0000ff"> Player 2 Color  
+<button id="startGame">Start Game</button>
+<table id="board"></table>
+
+document.getElementById("startGame").addEventListener("click", () => {
+    new Game(6, 7).startGame();
+});
