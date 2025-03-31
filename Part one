@@ -1,0 +1,120 @@
+class Game {
+    constructor(height = 6, width = 7) {
+        this.height = height;
+        this.width = width;
+        this.board = [];
+        this.currPlayer = null;
+        this.players = [];
+        this.gameOver = false;
+
+        this.makeBoard();
+        this.makeHtmlBoard();
+    }
+
+    makeBoard() {
+        this.board = Array.from({ length: this.height }, () => Array(this.width).fill(null));
+    }
+
+    makeHtmlBoard() {
+        const board = document.getElementById("board");
+        board.innerHTML = ""; // Clear previous board
+
+        // Create top row for column selection
+        const top = document.createElement("tr");
+        top.setAttribute("id", "column-top");
+        top.addEventListener("click", this.handleClick.bind(this));
+
+        for (let x = 0; x < this.width; x++) {
+            const headCell = document.createElement("td");
+            headCell.setAttribute("data-x", x);
+            top.append(headCell);
+        }
+        board.append(top);
+
+        // Create main board
+        for (let y = 0; y < this.height; y++) {
+            const row = document.createElement("tr");
+            for (let x = 0; x < this.width; x++) {
+                const cell = document.createElement("td");
+                cell.setAttribute("id", `${y}-${x}`);
+                row.append(cell);
+            }
+            board.append(row);
+        }
+    }
+
+    handleClick(evt) {
+        if (this.gameOver) return;
+
+        const x = +evt.target.dataset.x;
+        const y = this.findSpotForCol(x);
+        if (y === null) return;
+
+        this.board[y][x] = this.currPlayer;
+        this.placeInTable(y, x);
+
+        if (this.checkForWin()) {
+            this.gameOver = true;
+            return alert(`Player ${this.currPlayer.color} wins!`);
+        }
+
+        if (this.board.every(row => row.every(cell => cell))) {
+            this.gameOver = true;
+            return alert("It's a tie!");
+        }
+
+        this.currPlayer = this.currPlayer === this.players[0] ? this.players[1] : this.players[0];
+    }
+
+    findSpotForCol(x) {
+        for (let y = this.height - 1; y >= 0; y--) {
+            if (!this.board[y][x]) {
+                return y;
+            }
+        }
+        return null;
+    }
+
+    placeInTable(y, x) {
+        const piece = document.createElement("div");
+        piece.classList.add("piece");
+        piece.style.backgroundColor = this.currPlayer.color;
+
+        const spot = document.getElementById(`${y}-${x}`);
+        spot.append(piece);
+    }
+
+    checkForWin() {
+        const _win = cells => 
+            cells.every(([y, x]) => 
+                y >= 0 && y < this.height && 
+                x >= 0 && x < this.width && 
+                this.board[y][x] === this.currPlayer
+            );
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const horiz = [[y, x], [y, x+1], [y, x+2], [y, x+3]];
+                const vert = [[y, x], [y+1, x], [y+2, x], [y+3, x]];
+                const diagDR = [[y, x], [y+1, x+1], [y+2, x+2], [y+3, x+3]];
+                const diagDL = [[y, x], [y+1, x-1], [y+2, x-2], [y+3, x-3]];
+
+                if ([horiz, vert, diagDR, diagDL].some(_win)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    startGame() {
+        this.gameOver = false;
+        this.players = [
+            new Player(document.getElementById("p1Color").value || "red"),
+            new Player(document.getElementById("p2Color").value || "blue")
+        ];
+        this.currPlayer = this.players[0];
+        this.makeBoard();
+        this.makeHtmlBoard();
+    }
+}
